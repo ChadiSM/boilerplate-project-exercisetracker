@@ -1,46 +1,54 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
   <head>
-    <title>Exercise Tracker | freeCodeCamp</title>
-    <link rel="shortcut icon" href="https://cdn.freecodecamp.org/universal/favicons/favicon.ico"  type="image/x-icon" />
-    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet" type="text/css" />
-    <link href="style.css" rel="stylesheet" type="text/css" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Exercise Tracker</title>
+    <link rel="stylesheet" href="/style.css" />
   </head>
-
   <body>
-    <div class="container">
-      <h1>Exercise tracker</h1>
-      <form action="/api/users" method="post">
-        <h2>Create a New User</h2>
-        <p><code>POST /api/users</code></p>
-        <input id="uname" type="text" name="username" placeholder="username" />
-        <input type="submit" value="Submit" />
+    <h1>Exercise Tracker</h1>
+
+    <!-- Crear usuario -->
+    <div>
+      <h2>Create User</h2>
+      <form id="createUserForm">
+        <input type="text" id="username" placeholder="Username" required />
+        <button type="submit">Create User</button>
       </form>
-      <form action="/api/users/:_id/exercises" id="exercise-form" method="post">
-        <h2>Add exercises</h2>
-        <p><code>POST /api/users/:_id/exercises</code></p>
-        <input id="uid" type="text" name=":_id" placeholder=":_id" />
-        <input id="desc" type="text" name="description" placeholder="description*" />
-        <input id="dur" type="text" name="duration" placeholder="duration* (mins.)" />
-        <input id="date" type="text" name="date" placeholder="date (yyyy-mm-dd)" />
-        <input type="submit" value="Submit" />
-      </form>
-      <p>
-        <strong>GET user's exercise log: </strong>
-        <code>GET /api/users/:_id/logs?[from][&amp;to][&amp;limit]</code>
-      </p>
-      <p><strong>[ ]</strong> = optional</p>
-      <p><strong>from, to</strong> = dates (yyyy-mm-dd); <strong>limit</strong> = number</p>
     </div>
-    <script>
-      const exerciseForm = document.getElementById("exercise-form");
 
-      exerciseForm.addEventListener("submit", () => {
-        const userId = document.getElementById("uid").value;
-        exerciseForm.action = `/api/users/${userId}/exercises`;
+    <!-- Agregar ejercicio -->
+    <div>
+      <h2>Add Exercise</h2>
+      <form id="addExerciseForm">
+        <input
+          type="text"
+          id="description"
+          placeholder="Description"
+          required
+        />
+        <input
+          type="number"
+          id="duration"
+          placeholder="Duration (min)"
+          required
+        />
+        <input type="date" id="date" />
+        <button type="submit">Add Exercise</button>
+      </form>
+    </div>
 
-        exerciseForm.submit();
-      });
-    </script>
+    <!-- Ver ejercicios -->
+    <div>
+      <h2>User's Exercises</h2>
+      <form id="viewExercisesForm">
+        <input type="text" id="userId" placeholder="User ID" required />
+        <button type="submit">View Exercises</button>
+      </form>
+      <div id="exerciseLog"></div>
+    </div>
+
+    <script src="/index.js"></script>
   </body>
 </html>
