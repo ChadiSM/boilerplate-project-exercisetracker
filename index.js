@@ -8,28 +8,28 @@ const app = express();
 
 // Middleware
 app.use(cors());
-app.use(express.static("public"));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+app.use(express.static("public"));
 
-// Conexión a MongoDB
-mongoose
-  .connect(process.env.MONGO_URI || "mongodb://localhost/exercise-tracker", {
+// Database connection (usando la URI de FCC)
+mongoose.connect(
+  process.env.MONGO_URI || "mongodb://localhost/exercise-tracker",
+  {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-  })
-  .then(() => console.log("✅ Connected to MongoDB"))
-  .catch((err) => console.error("MongoDB connection error:", err));
+  },
+);
 
 // Schemas
 const userSchema = new mongoose.Schema({
-  username: { type: String, required: true },
+  username: String,
 });
 
 const exerciseSchema = new mongoose.Schema({
-  userId: { type: String, required: true },
-  description: { type: String, required: true },
-  duration: { type: Number, required: true },
+  userId: String,
+  description: String,
+  duration: Number,
   date: { type: Date, default: Date.now },
 });
 
@@ -46,10 +46,6 @@ app.get("/", (req, res) => {
 app.post("/api/users", async (req, res) => {
   const username = req.body.username;
 
-  if (!username) {
-    return res.status(400).json({ error: "Username is required" });
-  }
-
   try {
     const user = new User({ username });
     await user.save();
@@ -62,7 +58,7 @@ app.post("/api/users", async (req, res) => {
 // Get all users
 app.get("/api/users", async (req, res) => {
   try {
-    const users = await User.find({}).select("username _id");
+    const users = await User.find({});
     res.json(users);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -75,21 +71,27 @@ app.post("/api/users/:_id/exercises", async (req, res) => {
   let { description, duration, date } = req.body;
 
   // Validations
-  if (!description)
-    return res.status(400).json({ error: "Description is required" });
-  if (!duration) return res.status(400).json({ error: "Duration is required" });
+  if (!description || !duration) {
+    return res
+      .status(400)
+      .json({ error: "Description and duration are required" });
+  }
 
   duration = parseInt(duration);
-  if (isNaN(duration))
+  if (isNaN(duration)) {
     return res.status(400).json({ error: "Duration must be a number" });
+  }
 
   date = date ? new Date(date) : new Date();
-  if (isNaN(date.getTime()))
+  if (isNaN(date.getTime())) {
     return res.status(400).json({ error: "Invalid date" });
+  }
 
   try {
     const user = await User.findById(_id);
-    if (!user) return res.status(404).json({ error: "User not found" });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
 
     const exercise = new Exercise({
       userId: _id,
@@ -119,39 +121,44 @@ app.get("/api/users/:_id/logs", async (req, res) => {
 
   try {
     const user = await User.findById(_id);
-    if (!user) return res.status(404).json({ error: "User not found" });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
 
-    // Date filtering
+    // Build date filter
     let dateFilter = {};
     if (from) {
       from = new Date(from);
-      if (isNaN(from.getTime()))
+      if (isNaN(from.getTime())) {
         return res.status(400).json({ error: "Invalid from date" });
+      }
       dateFilter.$gte = from;
     }
     if (to) {
       to = new Date(to);
-      if (isNaN(to.getTime()))
+      if (isNaN(to.getTime())) {
         return res.status(400).json({ error: "Invalid to date" });
+      }
       dateFilter.$lte = to;
     }
 
+    // Build query
     let query = { userId: _id };
-    if (from || to) query.date = dateFilter;
-
-    // Limit
-    let limitNumber;
-    if (limit) {
-      limitNumber = parseInt(limit);
-      if (isNaN(limitNumber))
-        return res.status(400).json({ error: "Limit must be a number" });
+    if (from || to) {
+      query.date = dateFilter;
     }
 
-    let exercisesQuery = Exercise.find(query)
-      .select("description duration date -_id")
-      .sort({ date: 1 });
+    // Apply limit
+    let exercisesQuery = Exercise.find(query).select(
+      "description duration date -_id",
+    );
 
-    if (limitNumber) exercisesQuery = exercisesQuery.limit(limitNumber);
+    if (limit) {
+      limit = parseInt(limit);
+      if (!isNaN(limit)) {
+        exercisesQuery = exercisesQuery.limit(limit);
+      }
+    }
 
     const exercises = await exercisesQuery.exec();
 
@@ -170,7 +177,7 @@ app.get("/api/users/:_id/logs", async (req, res) => {
   }
 });
 
-// Start server
+// Listen
 const listener = app.listen(process.env.PORT || 3000, () => {
   console.log("Your app is listening on port " + listener.address().port);
 });
