@@ -1,54 +1,156 @@
 <!doctype html>
-<html lang="en">
+<html>
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Exercise Tracker</title>
     <link rel="stylesheet" href="/style.css" />
   </head>
   <body>
-    <h1>Exercise Tracker</h1>
+    <div class="container">
+      <h1>Exercise Tracker</h1>
 
-    <!-- Crear usuario -->
-    <div>
-      <h2>Create User</h2>
-      <form id="createUserForm">
-        <input type="text" id="username" placeholder="Username" required />
-        <button type="submit">Create User</button>
-      </form>
+      <div class="form-container">
+        <h2>Create a New User</h2>
+        <form id="user-form">
+          <input type="text" name="username" placeholder="Username" required />
+          <button type="submit">Submit</button>
+        </form>
+        <div id="user-result"></div>
+      </div>
+
+      <div class="form-container">
+        <h2>Add Exercises</h2>
+        <form id="exercise-form">
+          <input type="text" name="userId" placeholder="User ID" required />
+          <input
+            type="text"
+            name="description"
+            placeholder="Description"
+            required
+          />
+          <input
+            type="number"
+            name="duration"
+            placeholder="Duration (minutes)"
+            required
+          />
+          <input type="text" name="date" placeholder="Date (yyyy-mm-dd)" />
+          <button type="submit">Submit</button>
+        </form>
+        <div id="exercise-result"></div>
+      </div>
+
+      <div class="form-container">
+        <h2>Get Exercise Log</h2>
+        <form id="log-form">
+          <input type="text" name="userId" placeholder="User ID" required />
+          <input type="text" name="from" placeholder="From (yyyy-mm-dd)" />
+          <input type="text" name="to" placeholder="To (yyyy-mm-dd)" />
+          <input type="number" name="limit" placeholder="Limit" />
+          <button type="submit">Submit</button>
+        </form>
+        <div id="log-result"></div>
+      </div>
     </div>
 
-    <!-- Agregar ejercicio -->
-    <div>
-      <h2>Add Exercise</h2>
-      <form id="addExerciseForm">
-        <input
-          type="text"
-          id="description"
-          placeholder="Description"
-          required
-        />
-        <input
-          type="number"
-          id="duration"
-          placeholder="Duration (min)"
-          required
-        />
-        <input type="date" id="date" />
-        <button type="submit">Add Exercise</button>
-      </form>
-    </div>
+    <script>
+      // Handle user form submission
+      document
+        .getElementById("user-form")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const formData = new FormData(e.target);
+          const username = formData.get("username");
 
-    <!-- Ver ejercicios -->
-    <div>
-      <h2>User's Exercises</h2>
-      <form id="viewExercisesForm">
-        <input type="text" id="userId" placeholder="User ID" required />
-        <button type="submit">View Exercises</button>
-      </form>
-      <div id="exerciseLog"></div>
-    </div>
+          try {
+            const response = await fetch("/api/users", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ username }),
+            });
 
-    <script src="/index.js"></script>
+            const data = await response.json();
+            document.getElementById("user-result").innerHTML = `
+          <p>User created:</p>
+          <pre>${JSON.stringify(data, null, 2)}</pre>
+        `;
+          } catch (err) {
+            document.getElementById("user-result").innerHTML = `
+          <p class="error">Error: ${err.message}</p>
+        `;
+          }
+        });
+
+      // Handle exercise form submission
+      document
+        .getElementById("exercise-form")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const formData = new FormData(e.target);
+          const userId = formData.get("userId");
+          const description = formData.get("description");
+          const duration = formData.get("duration");
+          const date = formData.get("date");
+
+          const body = { description, duration };
+          if (date) body.date = date;
+
+          try {
+            const response = await fetch(`/api/users/${userId}/exercises`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(body),
+            });
+
+            const data = await response.json();
+            document.getElementById("exercise-result").innerHTML = `
+          <p>Exercise added:</p>
+          <pre>${JSON.stringify(data, null, 2)}</pre>
+        `;
+          } catch (err) {
+            document.getElementById("exercise-result").innerHTML = `
+          <p class="error">Error: ${err.message}</p>
+        `;
+          }
+        });
+
+      // Handle log form submission
+      document
+        .getElementById("log-form")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const formData = new FormData(e.target);
+          const userId = formData.get("userId");
+          const from = formData.get("from");
+          const to = formData.get("to");
+          const limit = formData.get("limit");
+
+          let url = `/api/users/${userId}/logs`;
+          const params = new URLSearchParams();
+          if (from) params.append("from", from);
+          if (to) params.append("to", to);
+          if (limit) params.append("limit", limit);
+
+          if (params.toString()) {
+            url += `?${params.toString()}`;
+          }
+
+          try {
+            const response = await fetch(url);
+            const data = await response.json();
+            document.getElementById("log-result").innerHTML = `
+          <p>Exercise log:</p>
+          <pre>${JSON.stringify(data, null, 2)}</pre>
+        `;
+          } catch (err) {
+            document.getElementById("log-result").innerHTML = `
+          <p class="error">Error: ${err.message}</p>
+        `;
+          }
+        });
+    </script>
   </body>
 </html>
