@@ -55,7 +55,6 @@ app.post("/api/users", async (req, res) => {
   }
 });
 
-// Get all users
 app.get("/api/users", async (req, res) => {
   try {
     const users = await User.find({});
@@ -65,39 +64,31 @@ app.get("/api/users", async (req, res) => {
   }
 });
 
-// Add exercise
 app.post("/api/users/:_id/exercises", async (req, res) => {
-  const { _id } = req.params;
-  let { description, duration, date } = req.body;
-
-  // Validations
-  if (!description || !duration) {
-    return res
-      .status(400)
-      .json({ error: "Description and duration are required" });
-  }
-
-  duration = parseInt(duration);
-  if (isNaN(duration)) {
-    return res.status(400).json({ error: "Duration must be a number" });
-  }
-
-  date = date ? new Date(date) : new Date();
-  if (isNaN(date.getTime())) {
-    return res.status(400).json({ error: "Invalid date" });
-  }
-
   try {
+    const { _id } = req.params;
+    const { description, duration, date } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(_id)) {
+      return res.status(400).json({ error: "ID de usuario inválido" });
+    }
+
+    if (!description || !duration) {
+      return res
+        .status(400)
+        .json({ error: "Description y duration son requeridos" });
+    }
+
     const user = await User.findById(_id);
     if (!user) {
-      return res.status(404).json({ error: "User not found" });
+      return res.status(404).json({ error: "Usuario no encontrado" });
     }
 
     const exercise = new Exercise({
       userId: _id,
       description,
-      duration,
-      date,
+      duration: parseInt(duration),
+      date: date ? new Date(date) : new Date(),
     });
 
     await exercise.save();
@@ -110,7 +101,7 @@ app.post("/api/users/:_id/exercises", async (req, res) => {
       date: exercise.date.toDateString(),
     });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(500).json({ error: err.message });
   }
 });
 
