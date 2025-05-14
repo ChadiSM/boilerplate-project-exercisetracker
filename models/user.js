@@ -1,10 +1,14 @@
 const mongoose = require("mongoose");
 
-const userSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+const exerciseSchema = new mongoose.Schema({
   description: { type: String, required: true },
   duration: { type: Number, required: true },
-  date: { type: Date, default: Date.now },
+  date: { type: Date, required: true },
+});
+
+const userSchema = new mongoose.Schema({
+  username: { type: String, required: true },
+  log: [exerciseSchema],
 });
 
 module.exports = mongoose.model("User", userSchema);
